@@ -24,7 +24,7 @@ function App() {
           About
         </a>
       </header>
-      <BrowserRouter>
+      <BrowserRouter basename="https://puvvl.github.io/puvvl">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
