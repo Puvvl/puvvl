@@ -1,8 +1,7 @@
 import React from 'react';
 import {
-  createBrowserRouter,
+  BrowserRouter,
   Route,
-  RouterProvider,
   Routes,
 } from "react-router-dom";
 import logo from './logo.svg';
@@ -10,20 +9,6 @@ import './App.css';
 
 import Home from './pages/Home';
 import About from './pages/About';
-
-const router = createBrowserRouter([
-  { path: "*", Component: Root },
-]);
-
-function Root() {
-  return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/about" element={<About />} />
-    </Routes>
-  );
-}
-
 
 function App() {
   return (
@@ -33,14 +18,18 @@ function App() {
 
         <a
           className="App-link"
-          href="/about"
+          href="about"
           rel="noopener noreferrer"
         >
           About
         </a>
       </header>
-
-      <RouterProvider router={router} />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
+        </Routes>
+      </BrowserRouter>
     </div>
   );
 }
