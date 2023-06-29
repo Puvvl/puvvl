@@ -1,0 +1,133 @@
+name: Deploy PR previews
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - closed
+    paths:
+      - "schema.graphql"
+      - "package.json"
+      - "yarn.lock"
+      - "src/**"
+      - ".github/workflows/gh-deploy-preview.yml"
+
+env:
+  APP_DIR: "."
+  NODE_VERSION: "16.19.1" # version from ./tool-versions.
+  NODE_CACHE_VERSION: "4" # increase this value if clearing cache is needed. Keep in sync with `./integration.yml` and `./frontend-checks.yml`
+  PUBLIC_URL: "/pr-preview/pr-${{ github.event.number }}/"
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  create-deploy-preview:
+    if: github.event.action == 'synchronize' || github.event.action == 'opened' || github.event.action == 'reopened'
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            docs:
+              - 'docs_public/**'
+
+      - name: Get yarn cache directory paths
+        id: yarn-cache-path
+        run: echo "::set-output name=path::$(yarn cache dir)"
+
+      - name: Use Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Use node dependencies cache
+        uses: actions/cache@v3
+        id: node-cache
+        with:
+          path: |
+            ${{ steps.yarn-cache-path.outputs.path }}
+            ${{ env.APP_DIR }}/build
+            ${{ env.APP_DIR }}/node_modules
+            node_modules
+          key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-${{ env.NODE_CACHE_VERSION }}-${{ hashFiles(format('{0}{1}', github.workspace, '/yarn.lock')) }}
+          restore-keys: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-${{ env.NODE_CACHE_VERSION }}-
+
+      - name: Install app dependencies
+        if: steps.node-cache.outputs.cache-hit != 'true'
+        run: yarn
+
+      - name: Build app
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096"
+        run: yarn app build
+
+      - name: Build public docs
+        if: steps.changes.outputs.docs == 'true'
+        working-directory: ./docs_public
+        run: |
+          yarn
+          PUBLIC_DOCS_URL="https://pr.turn.io" PUBLIC_DOCS_BASE_URL="/pr-preview/pr-${{ github.event.number }}/docs/" yarn build
+          mkdir -p ../${{ env.APP_DIR }}/build/docs
+          cp -r ./build/* ../${{ env.APP_DIR }}/build/docs/
+
+      - name: Deploy preview
+        uses: rossjrw/pr-preview-action@v1
+        with:
+          source-dir: ./assets/app/build
+          preview-branch: gh-pages
+          umbrella-dir: pr-preview
+          action: deploy
+      
+      - uses: actions/checkout@v3
+        with:
+          ref: gh-pages
+      - name: Install dependencies
+        run: yarn
+      - name: Generate PR-preview homepage
+        run: TOKEN=${{ secrets.GITHUB_TOKEN }} node scripts/pr-preview-homepage.js
+      - name: Commit changes
+        uses: EndBug/add-and-commit@v9
+        with:
+          message: 'generated'
+          add: 'index.html'
+
+  remove-deploy-preview:
+    if: github.event.action == 'closed' || github.event.pull_request.merged == true
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: rossjrw/pr-preview-action@v1
+        with:
+          source-dir: ./assets/app/build
+          preview-branch: gh-pages
+          umbrella-dir: pr-preview
+          action: remove
+
+      - uses: actions/checkout@v3
+        with:
+          ref: gh-pages
+      - name: Use Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Install dependencies
+        run: yarn
+      - name: Generate PR-preview homepage
+        run: TOKEN=${{ secrets.GITHUB_TOKEN }} node scripts/pr-preview-homepage.js
+      - name: Commit changes
+        uses: EndBug/add-and-commit@v9
+        with:
+          message: 'generated'
+          add: 'index.html'
