@@ -1,9 +1,6 @@
 name: Deploy PR previews
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
     types:
       - opened
@@ -85,7 +82,7 @@ jobs:
           action: deploy
 
   remove-deploy-preview:
-    if: github.event.action == 'closed' || github.event.pull_request.merged == true
+    if: github.event.action == 'closed' || github.event.pull_request.merged
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
