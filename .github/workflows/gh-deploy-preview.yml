@@ -71,16 +71,7 @@ jobs:
       - name: Build app
         env:
           NODE_OPTIONS: "--max_old_space_size=4096"
-        run: yarn app build
-
-      - name: Build public docs
-        if: steps.changes.outputs.docs == 'true'
-        working-directory: ./docs_public
-        run: |
-          yarn
-          PUBLIC_DOCS_URL="https://pr.turn.io" PUBLIC_DOCS_BASE_URL="/pr-preview/pr-${{ github.event.number }}/docs/" yarn build
-          mkdir -p ../${{ env.APP_DIR }}/build/docs
-          cp -r ./build/* ../${{ env.APP_DIR }}/build/docs/
+        run: yarn build
 
       - name: Deploy preview
         uses: rossjrw/pr-preview-action@v1
@@ -101,11 +92,3 @@ jobs:
           preview-branch: gh-pages
           umbrella-dir: pr-preview
           action: remove
-
-      - uses: actions/checkout@v3
-        with:
-          ref: gh-pages
-      - name: Use Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ env.NODE_VERSION }}
