@@ -1,9 +1,6 @@
 name: Deploy PR previews
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
     types:
       - opened
@@ -85,15 +82,24 @@ jobs:
           action: deploy
 
   remove-deploy-preview:
-    if: github.event_name == 'push'
+    if: github.event.pull_request.merged || github.event.pull_request.closed_at || github.event.action == 'closed'
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.number }}
       - uses: rossjrw/pr-preview-action@v1
         with:
           source-dir: ./build
           preview-branch: gh-pages
           umbrella-dir: pr-preview
           action: remove
+  log-deploy-actions:
+    runs-on: ubuntu-20.04
+    steps:
+      - run: echo "merged - ${{ github.event.pull_request.merged }}"
+      - run: echo "closed_at - ${{ github.event.pull_request.closed_at }}"
+      - run: echo "event action - ${{ github.event.action }}"
+      - run: echo "event_name - ${{ github.event_name }}"
+      - run: echo "action - ${{ github.action }}"
+      - run: echo "state - ${{ github.event.pull_request.state }}"
+      - run: echo "after - ${{ github.event.after }}"
+      - run: echo "before - ${{ github.event.before }}"
