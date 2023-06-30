@@ -1,9 +1,6 @@
 name: Deploy PR previews
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
     types:
       - opened
@@ -33,7 +30,7 @@ permissions:
 
 jobs:
   create-deploy-preview:
-    if: github.action.pull_request.types == 'synchronize' || github.action.pull_request.types == 'opened' || github.action.pull_request.types == 'reopened'
+    if: github.event.action.pull_request.types == 'synchronize' || github.event.action.pull_request.types == 'opened' || github.event.action.pull_request.types == 'reopened'
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout
@@ -85,7 +82,7 @@ jobs:
           action: deploy
 
   remove-deploy-preview:
-    if: github.action.pull_request.types == 'closed'
+    if: github.event.action.pull_request.types == 'closed'
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
