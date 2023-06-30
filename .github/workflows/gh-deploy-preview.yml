@@ -89,6 +89,8 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.number }}
       - uses: rossjrw/pr-preview-action@v1
         with:
           source-dir: ./build
