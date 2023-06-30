@@ -100,3 +100,6 @@ jobs:
       - run: echo "event action - ${{ github.event.action }}"
       - run: echo "event_name - ${{ github.event_name }}"
       - run: echo "action - ${{ github.action }}"
+      - run: echo "state - ${{ github.event.pull_request.state }}"
+      - run: echo "after - ${{ github.event.after }}"
+      - run: echo "before - ${{ github.event.before }}"
