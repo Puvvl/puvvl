@@ -97,5 +97,6 @@ jobs:
     steps:
       - run: echo "merged - ${{ github.event.pull_request.merged }}"
       - run: echo "closed_at - ${{ github.event.pull_request.closed_at }}"
-      - run: echo "action - ${{ github.event.action }}"
-      - run: echo "row - ${{ github }}"
+      - run: echo "event action - ${{ github.event.action }}"
+      - run: echo "event_name - ${{ github.event_name }}"
+      - run: echo "action - ${{ github.action }}"
