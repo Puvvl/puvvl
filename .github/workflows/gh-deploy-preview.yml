@@ -95,4 +95,7 @@ jobs:
   log-deploy-actions:
     runs-on: ubuntu-20.04
     steps:
-      - run: echo "${{ github.event.pull_request.merged }}, ${{ github.event.pull_request.closed_at }}, ${{ github.event.action }}"
+      - run: echo "merged - ${{ github.event.pull_request.merged }}"
+      - run: echo "closed_at - ${{ github.event.pull_request.closed_at }}"
+      - run: echo "action - ${{ github.event.action }}"
+      - run: echo "row - ${{ github }}"
