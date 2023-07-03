@@ -1,4 +1,4 @@
-name: Add Deploy PR preview
+name: Deploy PR previews
 
 on:
   pull_request:
@@ -7,12 +7,10 @@ on:
       - reopened
       - synchronize
     paths:
-      - "package.json"
-      - "yarn.lock"
       - "src/**"
 
 env:
-  APP_DIR: "assets/app"
+  APP_DIR: "."
   NODE_VERSION: "16.19.1" # version from ./tool-versions.
   NODE_CACHE_VERSION: "4" # increase this value if clearing cache is needed. Keep in sync with `./integration.yml` and `./frontend-checks.yml`
   PUBLIC_URL: "/pr-preview/pr-${{ github.event.number }}/"
@@ -68,34 +66,12 @@ jobs:
       - name: Build app
         env:
           NODE_OPTIONS: "--max_old_space_size=4096"
-        run: yarn app build
-
-      - name: Build public docs
-        if: steps.changes.outputs.docs == 'true'
-        working-directory: ./docs_public
-        run: |
-          yarn
-          PUBLIC_DOCS_URL="https://pr.turn.io" PUBLIC_DOCS_BASE_URL="/pr-preview/pr-${{ github.event.number }}/docs/" yarn build
-          mkdir -p ../${{ env.APP_DIR }}/build/docs
-          cp -r ./build/* ../${{ env.APP_DIR }}/build/docs/
+        run: yarn build
 
       - name: Deploy preview
         uses: rossjrw/pr-preview-action@v1
         with:
-          source-dir: ./assets/app/build
+          source-dir: ./build
           preview-branch: gh-pages
           umbrella-dir: pr-preview
           action: deploy
-      
-      - uses: actions/checkout@v3
-        with:
-          ref: gh-pages
-      - name: Install dependencies
-        run: yarn
-      - name: Generate PR-preview homepage
-        run: TOKEN=${{ secrets.GITHUB_TOKEN }} node scripts/pr-preview-homepage.js
-      - name: Commit changes
-        uses: EndBug/add-and-commit@v9
-        with:
-          message: 'generated'
-          add: 'index.html'

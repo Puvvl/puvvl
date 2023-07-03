@@ -6,7 +6,7 @@ on:
       - closed
 
 env:
-  APP_DIR: "assets/app"
+  APP_DIR: "."
   NODE_VERSION: "16.19.1" # version from ./tool-versions.
   NODE_CACHE_VERSION: "4" # increase this value if clearing cache is needed. Keep in sync with `./integration.yml` and `./frontend-checks.yml`
   PUBLIC_URL: "/pr-preview/pr-${{ github.event.number }}/"
@@ -36,7 +36,7 @@ jobs:
       - uses: rossjrw/pr-preview-action@v1
         if: steps.run.outputs.result == 'true'
         with:
-          source-dir: ./assets/app/build
+          source-dir: ./build
           preview-branch: gh-pages
           umbrella-dir: pr-preview
           action: remove
@@ -45,22 +45,7 @@ jobs:
         if: steps.run.outputs.result == 'true'
         with:
           ref: gh-pages
-      - name: Use Node.js ${{ env.NODE_VERSION }}
-        if: steps.run.outputs.result == 'true'
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-      - name: Install dependencies
-        if: steps.run.outputs.result == 'true'
-        run: yarn
-      - name: Generate PR-preview homepage
-        if: steps.run.outputs.result == 'true'
-        run: TOKEN=${{ secrets.GITHUB_TOKEN }} node scripts/pr-preview-homepage.js
-      - name: Commit changes
-        if: steps.run.outputs.result == 'true'
-        uses: EndBug/add-and-commit@v9
-        with:
-          message: 'generated'
-          add: 'index.html'
+
+
 
         
