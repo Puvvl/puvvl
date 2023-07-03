@@ -1,0 +1,51 @@
+name: Remove Deploy PR preview
+
+on:
+  pull_request:
+    types:
+      - closed
+
+env:
+  APP_DIR: "."
+  NODE_VERSION: "16.19.1" # version from ./tool-versions.
+  NODE_CACHE_VERSION: "4" # increase this value if clearing cache is needed. Keep in sync with `./integration.yml` and `./frontend-checks.yml`
+  PUBLIC_URL: "/pr-preview/pr-${{ github.event.number }}/"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  remove-deploy-preview:
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Check for pr-preview comment
+        id: run
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const comments = await github.rest.issues.listComments({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            }).then(({data}) => data)
+            return comments.some(({body}) => body.includes("Deployed preview to"))
+
+      - uses: actions/checkout@v3
+      - uses: rossjrw/pr-preview-action@v1
+        if: steps.run.outputs.result == 'true'
+        with:
+          source-dir: ./build
+          preview-branch: gh-pages
+          umbrella-dir: pr-preview
+          action: remove
+
+      - uses: actions/checkout@v3
+        if: steps.run.outputs.result == 'true'
+        with:
+          ref: gh-pages
+
+
+
+        
