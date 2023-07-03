@@ -11,6 +11,7 @@ import Home from './pages/Home';
 import About from './pages/About';
 
 function App() {
+  console.log("test");
   return (
     <div className="App">
       <header className="App-header">
